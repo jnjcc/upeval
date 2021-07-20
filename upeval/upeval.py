@@ -38,7 +38,19 @@ class UpContEval(UpBaseEval):
 
     def _cumsumed(self):
         """ cumsum by `col_uscore' """
-        df_sort = self.df_.sort_values(self.col_uscore_, ascending = self.ascending_).reset_index(drop = True)
+        ## Without shuffling, the following DataFrame might seem to have imbalance problems in cumsum plots
+        ##     | Treatment | Uscore |
+        ##     |-----------|--------|
+        ##     | 0         | 0.6    |
+        ##     | 1         | 0.5    |
+        ##     | ...       | 0.5    |
+        ##     | 1         | 0.5    |
+        ##     | 0         | 0.5    |
+        ##     | ...       | 0.5    |
+        ##     | 0         | 0.5    |
+        ##     | 0         | 0.2    |
+        df_sort = self.df_.sample(frac = 1.0) ## shuffle the DataFrame before sorting
+        df_sort = df_sort.sort_values(self.col_uscore_, ascending = self.ascending_).reset_index(drop = True)
         df_sort.index = df_sort.index + 1
         df_sort["Rt"] = (df_sort[self.col_outcome_] * df_sort[self.col_treatment_]).cumsum()
         df_sort["Nt"] = df_sort[self.col_treatment_].cumsum()
